@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -39,9 +40,17 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	converted := service.Service(string(content)) //перевели из/в морзе
-	err = os.WriteFile(time.Now().UTC().Add(3*time.Hour).Format("2006-01-02_15-04-05"), []byte(converted), 0755)
+	fn := time.Now().UTC().Add(3 * time.Hour).Format("2006-01-02_15-04-05")
+	err = os.WriteFile(fn, []byte(converted), 0755)
 	if err != nil {
 		http.Error(w, "file writing error", http.StatusInternalServerError)
 		return
 	}
+
+	// Выводим результат в браузер
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(content))
+	s := fmt.Sprint(" результат: ", converted, " имя файла: ", fn)
+	w.Write([]byte(s))
 }
